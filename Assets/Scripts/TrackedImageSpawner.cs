@@ -35,7 +35,6 @@ public class TrackedImageSpawner : MonoBehaviour
 
     private void Start()
     {
-        // Instanciamos los prefabs y los guardamos
         foreach (var pair in imagePrefabPairs)
         {
             var newPrefab = Instantiate(pair.prefab, Vector3.zero, Quaternion.identity);
