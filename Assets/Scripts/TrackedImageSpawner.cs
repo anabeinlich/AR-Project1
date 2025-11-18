@@ -47,42 +47,54 @@ public class TrackedImageSpawner : MonoBehaviour
     private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
     {
         foreach (var trackedImage in eventArgs.added)
-        {
             UpdateSpawnedPrefab(trackedImage);
-        }
 
         foreach (var trackedImage in eventArgs.updated)
-        {
             UpdateSpawnedPrefab(trackedImage);
-        }
 
         foreach (var trackedImage in eventArgs.removed)
         {
-            if (spawnedPrefabs.TryGetValue(trackedImage.referenceImage.name, out var prefab))
-            {
+            string imageName = trackedImage.referenceImage.name;
+
+            if (spawnedPrefabs.TryGetValue(imageName, out var prefab))
                 prefab.SetActive(false);
-            }
         }
     }
 
     private void UpdateSpawnedPrefab(ARTrackedImage trackedImage)
     {
-        var imageName = trackedImage.referenceImage.name;
-
-        if (spawnedPrefabs.TryGetValue(imageName, out var prefab))
+        if (trackedImage.referenceImage.guid == System.Guid.Empty)
         {
-            if (trackedImage.trackingState == TrackingState.Tracking)
-            {
-                prefab.SetActive(true);
-                prefab.transform.SetPositionAndRotation(
-                    trackedImage.transform.position,
-                    trackedImage.transform.rotation
-                );
-            }
-            else
-            {
-                prefab.SetActive(false);
-            }
+            Debug.LogWarning("ARTrackedImage con GUID vacío. Ignorando actualización.");
+            return;
+        }
+
+        string imageName = trackedImage.referenceImage.name;
+
+        if (string.IsNullOrWhiteSpace(imageName))
+        {
+            Debug.LogWarning("ARTrackedImage con nombre vacío. Unity 6 bug.");
+            return;
+        }
+
+        if (!spawnedPrefabs.TryGetValue(imageName, out var prefab))
+        {
+            Debug.LogWarning($"No hay prefab asignado a la imagen '{imageName}'.");
+            return;
+        }
+
+        if (trackedImage.trackingState == TrackingState.Tracking)
+        {
+            prefab.SetActive(true);
+
+            prefab.transform.SetPositionAndRotation(
+                trackedImage.transform.position,
+                trackedImage.transform.rotation * Quaternion.Euler(0, 180, 0) 
+            );
+        }
+        else
+        {
+             prefab.SetActive(false);
         }
     }
 }
